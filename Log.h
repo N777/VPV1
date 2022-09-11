@@ -15,6 +15,13 @@
 
 using namespace std;
 
+struct vec
+{
+    int a;
+    double x;
+    int b;
+};
+
 // Код упорядочевания: естественный, вначале минимальные, вначале максимальные
 enum Order { O_NATURAL, O_MIN, O_MAX };
 /* Параметры конфигурирования формата распечатки и фильтрации
@@ -91,6 +98,15 @@ public:
 		}
 		return *this;
 	}
+
+    Log& series_with_parametr(bool clear, int count, double (meter)(vec), vector<vec> data) {
+        if (clear) arr.clear();
+        for (int n = 0; n < count; n++) {
+            arr.push_back(meter(data[n]));
+        }
+        return *this;
+    }
+
 	// Очищает массив измерений
 	Log& clear() {
 		arr.clear();
