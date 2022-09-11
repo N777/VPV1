@@ -53,7 +53,7 @@ public:
 	double dmin = 1.0E10, dmax = 0.; // минимальный и максимальный элемент
 	double avg = 0., sqdev = 0., sqdev_perc = 0; // среднее, СКО, СКО%
 	vector <double> arr;
-	double scale = 1.;
+	double scale = 1., k = 0;
 	int conf[CONFIG_SIZE] = { 0, 0, 0, 0 };
 	ostringstream msgfiltr;
 	Log() {}
@@ -99,10 +99,17 @@ public:
 		return *this;
 	}
 
-    Log& series_with_parametr(bool clear, int count, double (meter)(vec), vector<vec> data) {
+    Log& series_with_parametr(bool clear, int count, double (meter)(vec, int), vector<vec> data, int num = 0) {
         if (clear) arr.clear();
         for (int n = 0; n < count; n++) {
-            arr.push_back(meter(data[n]));
+            arr.push_back(meter(data[n], num ? n * num : 1));
+        }
+        return *this;
+    }
+
+    Log& diffK(){
+        for (int i = 0; i < arr.size(); ++i) {
+            arr[i] = abs(arr[i] - k * i);
         }
         return *this;
     }
@@ -144,7 +151,8 @@ public:
 		return *this;
 	}
 	Log& printk() {
-		cout << arr[arr.size() - 1] * scale / arr.size() << endl;
+        k = arr[arr.size() - 1] / arr.size();
+		cout << "k = " << k * scale << endl;
 		return *this;
 	}
 	// целочисленный вывод с масштабом scale первых len в одном из трех порадков:

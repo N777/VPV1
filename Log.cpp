@@ -24,15 +24,29 @@ using namespace std;
 #define Repeat1000(x) Repeat100(Repeat10(x))
 #define Repeat10000(x) Repeat100(Repeat100(x))
 
+#define R2 0
+#define R3 0
+#define R4 1
+#define R5 0
+
 
 
 int main() {
+
+#if R2
 	second();
 	countOfNumbers = 40;
 	retry = 1;
 	second(50);
+#endif
+#if R3
 	third();
+#endif
+#if R4
 	fourth();
+#endif
+#if R5
 	fifth();
+#endif
 	return 0;
 }

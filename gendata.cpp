@@ -32,12 +32,16 @@ vector <vec> gen_data() {
     return arr;
 }
 
-double function(vec x){
-    return x.a* log((1 + x.x) / (1 - x.x)) / x.b;
+double function(vec x, int n){
+    double sum = 0;
+    for (int i = 0; i < n; ++i) {
+        sum += x.a* log((1 + x.x) / (1 - x.x)) / x.b;
+    }
+    return sum;
 }
 
 
-double ñlockInterval(vec x) {
+double ñlockInterval(vec x, int n = 1) {
     double res;
     clock_t t_start, t_finish;
     clock_t t_clock = clock();
@@ -45,7 +49,7 @@ double ñlockInterval(vec x) {
     t_start = clock();
     for (int i = 0; i < retry; i++)
     {
-        res = function(x);
+        res = function(x, n);
     }
     while (clock() < t_clock + 2);
     t_finish = clock();
@@ -55,7 +59,7 @@ double ñlockInterval(vec x) {
 
 
 // Äëèòåëüíîñòü îäíîãî clock-èíòåðâàëà ñ ïîìîùüþ QPC
-double ñlockIntervalUsingQPC(vec x) {
+double ñlockIntervalUsingQPC(vec x, int n = 1) {
     double res;
     LARGE_INTEGER t_start, t_finish, freq;
     __int64 t_code;
@@ -65,7 +69,7 @@ double ñlockIntervalUsingQPC(vec x) {
     QueryPerformanceCounter(&t_start);
     for (int i = 0; i < retry; i++)
     {
-        res = function(x);
+        res = function(x, n);
     }
     while (clock() < t_clock + 2);
     QueryPerformanceCounter(&t_finish);
@@ -91,13 +95,13 @@ unsigned long long getFrequency() {
 }
 
 // Äëèòåëüíîñòü îäíîãî ñlock-èíòåðâàëà â òàêòàõ TSC
-double ñlockIntervalUsingTSC(vec x) {
+double ñlockIntervalUsingTSC(vec x, int n = 1) {
     double res;
     __int64 t_start, t_finish;
     clock_t t_clock = clock();
     while (clock() < t_clock + 1);
     t_start = __rdtsc();
-    res = function(x);
+    res = function(x, n);
     while (clock() < t_clock + 2);
     t_finish = __rdtsc();
     trash(res);

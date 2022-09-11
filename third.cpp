@@ -3,7 +3,6 @@
 #include "gendata.cpp"
 
 void third() {
-    setprecision(0);
     int sum = 0;
     int num = 0;
     double arr[2] = { 0,0 };

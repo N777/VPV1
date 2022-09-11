@@ -4,65 +4,36 @@
 
 void fifth() {
     Log logger;
+    logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
+                    {FILTR_MIN,0},{FILTR_MAX, 0} }).set_scale(NS_IN_SEC); // нет фильтрации
     double scale; // масштаб выводимых значений
+    scale = 1; // Значения будем выводить в микросекундах
     setlocale(LC_CTYPE, "rus");
-    double res;
+    int nPasses = 10;
     vector<double> result;
     vector <vec> arr = gen_data();
-    int step = 1e3;
-    for (int i = 0; i < 1000; i++)
-    {
-        clock_t start = clock();
-        for (int j = 0; j < i*step; j++)
-        {
-            res = arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
-        }
-        clock_t end = clock();
-        result.push_back(double(end - start)/CLOCKS_PER_SEC);
+    retry = 1e2;
+    cout.precision(6);
+
+    for (int n = 9; n <= nPasses; n++) {
+        cout << "\nСерия " << n << endl << endl;
+        long multi = 2e2;
+        logger.series_with_parametr(true, 1000, сlockInterval, arr, multi).printk().diffK()
+                .calc().stat("Число наносекунд через clock (без фильтрации)");
     }
 
-    cout << "\n\nОценка повторяемости 1000 измерений clock - интервала в 200\n";
-    logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
-                    {FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
-    logger.set(result).set_scale(MCS_IN_SEC)
-            .calc().stat("").printk().write_in_file("impClock.txt").print(10);
-
-    logger.clear();
-    result.clear();
-    for (int i = 0; i < 1000; i++)
-    {
-        LARGE_INTEGER t_start, t_finish, freq;
-        __int64 t_code;
-        QueryPerformanceFrequency(&freq);
-        QueryPerformanceCounter(&t_start);
-        for (int j = 0; j < i*step; j++)
-        {
-            res = arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
-        }
-        QueryPerformanceCounter(&t_finish);
-        t_code = t_finish.QuadPart - t_start.QuadPart;
-        result.push_back(double(t_code) / freq.QuadPart);
+    for (int n = 8; n <= nPasses; n++) {
+        cout << "\nСерия " << n << endl << endl;
+        long multi = 1e2;
+        logger.series_with_parametr(true, 1000, сlockIntervalUsingQPC, arr, multi).printk().diffK()
+                .calc().stat("Число наносекунд через QPC (без фильтрации)");
     }
 
-    cout << "\n\nОценка повторяемости 1000 измерений QPC - интервала в 200 \n";
-    logger.set(result).set_scale(NS_IN_SEC)
-            .calc().stat( "").printk().write_in_file("impQPC.txt").print(10);
-    logger.clear();
-    result.clear();
-    for (int i = 0; i < 1000; i++)
-    {
-        __int64 t_start, t_finish;
-        t_start = __rdtsc();
-        for (int j = 0; j < i*step; j++)
-        {
-            res = arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
-        }
-        t_finish = __rdtsc();
-        result.push_back(double(t_finish - t_start) / getFrequency());
+    for (int n = 8; n <= nPasses; n++) {
+        cout << "\nСерия " << n << endl << endl;
+        long multi = 2e2;
+        logger.series_with_parametr(true, 1000, сlockIntervalUsingTSC, arr, multi).printk().diffK()
+                .calc().stat("Число наносекунд через TSC (без фильтрации)");
     }
-
-    cout << "\n\nОценка повторяемости 1000 измерений TSC - интервала в 200 \n";
-    logger.set(result).set_scale(NS_IN_SEC)
-            .calc().stat("").printk().write_in_file("impTSC.txt").print(10);
 }
 

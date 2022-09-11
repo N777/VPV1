@@ -42,22 +42,6 @@ double сlockIntervalUsingQPC() {
     return double(t_code) / freq.QuadPart / retry;
 };
 
-unsigned long long getFrequency() {
-    clock_t tclock = clock();
-    while (clock() < tclock + 1); // ожидание конца начавшегося такта
-    tclock = clock();
-    unsigned long long tsc = __rdtsc();
-    while (clock() < tclock + 1);	// ожидание конца начавшегося такта
-    unsigned long long tscEnd = __rdtsc();
-    unsigned long long tscDelta = tscEnd - tsc;// сколько тактов TSC прошло за один такт clock
-    unsigned long long Fl = (tscDelta * CLOCKS_PER_SEC); // частота процессора
-    tclock = clock(); tsc = __rdtsc();
-    while (clock() < tclock + 1); // ожидание конца начавшегося такта
-    tscEnd = __rdtsc(); tscDelta = tscEnd - tsc;// сколько тактов TSC прошло за один такт clock
-    unsigned long long F2 = (tscDelta * CLOCKS_PER_SEC); // частота процессора
-    return min(Fl, F2);
-}
-
 // Длительность одного сlock-интервала в тактах TSC
 double сlockIntervalUsingTSC() {
     __int64 t_start, t_finish;
