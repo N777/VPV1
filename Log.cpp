@@ -8,7 +8,7 @@
 #include <iostream>
 #include <Windows.h>
 #include <time.h>
-#include "..\Log.h"
+#include "Log.h"
 #include <random>
 
 using namespace std;
@@ -16,7 +16,7 @@ using namespace std;
 #define NS_IN_SEC 1.E9 // число наносекунд в секунде
 #define MCS_IN_SEC 1.E6 // число микросекунд в секунде
 int countOfNumbers = 10; // сколько чисел Фибаначи требуется
-unsigned __int64 retry = 90;
+unsigned __int64 retry = 2000;
 // Макросы повторения для генерации продуктов разворачивания циклов
 #define Repeat10(x) x x x x x x x x x x 
 #define Repeat100(x) Repeat10(Repeat10(x))
@@ -44,12 +44,12 @@ double сlockInterval() {
 	t_start = clock();
 	for (int i = 0; i < retry; i++)
 	{
-		res = fibRecursive(40);
+		res = fibRecursive(countOfNumbers);
 	}
 	while (clock() < t_clock + 2);
 	t_finish = clock();
 	trash(res);
-	return double(t_finish - t_start) / CLOCKS_PER_SEC / retry;
+	return double(t_finish - t_start) / retry / CLOCKS_PER_SEC;
 }
 
 
@@ -99,7 +99,7 @@ double сlockIntervalUsingTSC() {
 	return double(t_finish - t_start) / getFrequency();
 };
 
-void second() {
+void second(int count_try = 1000) {
 	Log log;
 	double scale; // масштаб выводимых значений
 	scale = MCS_IN_SEC; // Значения будем выводить в микросекундах
@@ -109,16 +109,16 @@ void second() {
 	{FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
 
 	log.series(true, 1, сlockInterval)
-		.calc().set_scale(NS_IN_SEC).stat("Оценка повторяемости 1 измерения clock - интервала через clock");
+		.calc().set_scale(NS_IN_SEC).stat("Оценка повторяемости интервала через clock");
 
-	//log.series(true, 1000, сlockInterval)
-	//	.calc().set_scale(NS_IN_SEC).stat("Оценка повторяемости 1000 измерений clock - интервала через clock");
+	log.series(true, count_try, сlockInterval)
+		.calc().set_scale(NS_IN_SEC).stat("Оценка повторяемости интервала через clock");
 
-	//log.series(true, 1000, сlockIntervalUsingQPC)
-	//	.calc().set_scale(NS_IN_SEC).stat("Оценка повторяемости 1000 измерений clock - интервала через QPC без фильтрации");
+	log.series(true, count_try, сlockIntervalUsingQPC)
+		.calc().set_scale(NS_IN_SEC).stat("Оценка повторяемости интервала через QPC без фильтрации");
 
-	//log.series(true, 1000, сlockIntervalUsingTSC)
-	//	.calc().set_scale(scale).stat("Оценка повторяемости 1000 измерений clock - интервала через TSC без фильтрации");
+	log.series(true, count_try, сlockIntervalUsingTSC)
+		.calc().set_scale(scale).stat("Оценка повторяемости интервала через TSC без фильтрации");
 
 }
 
@@ -224,7 +224,7 @@ void fourth() {
 			clock_t end = clock();
 			if (end - start >= 200)
 				break;
-			stop += 1e6;
+			stop += 5e5;
 		}
 		for (int i = 0; i < 1000; i++)
 		{
@@ -238,11 +238,11 @@ void fourth() {
 		}
 
 		cout << "\n\nОценка повторяемости 1000 измерений clock - интервала в 200\n";
-		cout << stop;
+		//cout << stop;
 		logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
 			{FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
 		logger.set(result).set_scale(scale)
-			.calc().stat("").write_in_file("Clock.txt");
+			.calc().stat("").write_in_file("Clock.txt").print(10);
 	logger.clear();
 	result.clear();
 	stop = 1;
@@ -277,11 +277,11 @@ void fourth() {
 	}
 
 	cout << "\n\nОценка повторяемости 1000 измерений QPC - интервала в 200 \n";
-	cout << stop;
+	//cout << stop;
 	logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
 		{FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
 	logger.set(result).set_scale(scale)
-		.calc().stat("").write_in_file("QPC.txt");
+		.calc().stat("").write_in_file("QPC.txt").print(10);
 	logger.clear();
 	result.clear();
 	stop = 1;
@@ -310,17 +310,18 @@ void fourth() {
 	}
 
 	cout << "\n\nОценка повторяемости 1000 измерений TSC - интервала в 200 \n";
-	cout << stop;
+	//cout << stop;
 	logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
 		{FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
 	logger.set(result).set_scale(scale)
-		.calc().stat("").write_in_file("TSC.txt");
+		.calc().stat("").write_in_file("TSC.txt").print(10);
 }
 
 void fifth() {
 	Log logger;
 	double scale; // масштаб выводимых значений
 	setlocale(LC_CTYPE, "rus");
+	double res;
 	vector<double> result;
 	vector <vec> arr = gen_data();
 	int step = 1e3;
@@ -329,7 +330,7 @@ void fifth() {
 			clock_t start = clock();
 			for (int j = 0; j < i*step; j++)
 			{
-				arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
+				res = arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
 			}
 			clock_t end = clock();
 			result.push_back(double(end - start)/CLOCKS_PER_SEC);
@@ -339,7 +340,7 @@ void fifth() {
 		logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
 			{FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
 		logger.set(result).set_scale(MCS_IN_SEC)
-			.calc().stat("").printk().write_in_file("impClock.txt");
+			.calc().stat("").printk().write_in_file("impClock.txt").print(10);
 
 	logger.clear();
 	result.clear();
@@ -351,7 +352,7 @@ void fifth() {
 		QueryPerformanceCounter(&t_start);
 		for (int j = 0; j < i*step; j++)
 		{
-			arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
+			res = arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
 		}
 		QueryPerformanceCounter(&t_finish);
 		t_code = t_finish.QuadPart - t_start.QuadPart;
@@ -359,10 +360,8 @@ void fifth() {
 	}
 
 	cout << "\n\nОценка повторяемости 1000 измерений QPC - интервала в 200 \n";
-	logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
-		{FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
 	logger.set(result).set_scale(NS_IN_SEC)
-		.calc().stat( "").printk().write_in_file("impQPC.txt");
+		.calc().stat( "").printk().write_in_file("impQPC.txt").print(10);
 	logger.clear();
 	result.clear();
 	for (int i = 0; i < 1000; i++)
@@ -371,26 +370,25 @@ void fifth() {
 		t_start = __rdtsc();
 		for (int j = 0; j < i*step; j++)
 		{
-			arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
+			res = arr[i].a* log((1 + arr[i].x) / (1 - arr[i].x)) / arr[i].b;
 		}
 		t_finish = __rdtsc();
 		result.push_back(double(t_finish - t_start) / getFrequency());
 	}
 
 	cout << "\n\nОценка повторяемости 1000 измерений TSC - интервала в 200 \n";
-	logger.config({ {PREC_AVG, 2},  // Для среднего и СКО задаем более высокую точность
-		{FILTR_MIN,0},{FILTR_MAX, 0} }); // нет фильтрации
 	logger.set(result).set_scale(NS_IN_SEC)
-		.calc().stat("").printk().write_in_file("impTSC.txt");
+		.calc().stat("").printk().write_in_file("impTSC.txt").print(10);
 }
 
 
 int main() {
-	second();
+	/*second();
 	countOfNumbers = 40;
-	second();
+	retry = 1;
+	second(50);*/
 	//third();
 	//fourth();
-	//fifth();
+	fifth();
 	return 0;
 }
